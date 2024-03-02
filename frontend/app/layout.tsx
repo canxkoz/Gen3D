@@ -7,6 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Gen3D",
   description: "Dream",
+  icons: "/favicon-black.png",
 };
 
 export default function RootLayout({
