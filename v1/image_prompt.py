@@ -1,53 +1,3 @@
-
-
-from io import BytesIO
-import streamlit as st
-from PIL import Image
-from rembg import remove
-import numpy as np
-import base64
-
-st.title("Image Background Remover")
-
-# Upload the file
-image_upload = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
-
-# Function to convert image for download
-def convert_image_to_uri(img):
-    buf = BytesIO()
-    img.save(buf, format="PNG")
-    byte_im = buf.getvalue()
-    data_uri = base64.b64encode(byte_im).decode('utf-8')
-    return f"data:image/png;base64,{data_uri}"
-
-# If an image is uploaded, process it
-if image_upload is not None:
-    # Open the uploaded image
-    input_image = Image.open(image_upload)
-    
-    # Convert the image to RGBA if it's not already
-    if input_image.mode != 'RGBA':
-        input_image = input_image.convert('RGBA')
-    
-    # Remove the background
-    output_image = remove(np.array(input_image))  # Convert PIL image to numpy array
-    
-    # Convert the output image to PIL Image
-    result_img = Image.fromarray(output_image)
-    
-    # Convert the output image to URI for download
-    final_uri = convert_image_to_uri(result_img)
-    
-    # Display the original and the result side by side
-    col1, col2 = st.columns(2)
-    with col1:
-        st.image(input_image, caption='Original Image')
-    with col2:
-        st.image(result_img, caption='Image without Background')
-    
-    # Create a download button for the result image
-    st.markdown(f'<a href="{final_uri}" download="no_bg.png">Download Image</a>', unsafe_allow_html=True)
-
 from io import BytesIO
 import streamlit as st
 from PIL import Image
@@ -55,20 +5,24 @@ from rembg import remove
 import numpy as np
 import base64
 import replicate
+import requests
 
 st.title("Image Background Remover")
 
 # Upload the file
 image_upload = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
 
-# Function to convert image for download
-def convert_image_to_uri(img):
-    buf = BytesIO()
-    img.save(buf, format="PNG")
-    byte_im = buf.getvalue()
-    data_uri = base64.b64encode(byte_im).decode('utf-8')
-    return f"data:image/png;base64,{data_uri}"
+def upload_img_to_imgbb(image_path):
+    url = "https://api.imgbb.com/1/upload"
+    api_key = "d192046740ccc0be38d900db83555cb2" # change this to your own imgbb API key
 
+    with open(image_path, "rb") as file:
+        image_data = base64.b64encode(file.read()).decode("utf-8")
+        payload = {"key": api_key, "image": image_data}
+        response = requests.post(url, data=payload)
+        response.raise_for_status()
+        return response.json()
+    
 # If an image is uploaded, process it
 if image_upload is not None:
     # Open the uploaded image
@@ -83,9 +37,13 @@ if image_upload is not None:
     
     # Convert the output image to PIL Image
     result_img = Image.fromarray(output_image)
+
+    # Save the image to a file
+    result_img.save("no_bg.png")
     
     # Convert the output image to URI for download
-    final_uri = convert_image_to_uri(result_img)
+    response = upload_img_to_imgbb("no_bg.png")
+    final_uri = response['data']['url']
     
     # Display the original and the result side by side
     col1, col2 = st.columns(2)
@@ -96,9 +54,6 @@ if image_upload is not None:
     
     # Create a download button for the result image
     st.markdown(f'<a href="{final_uri}" download="no_bg.png">Download Image</a>', unsafe_allow_html=True)
-    
-    # Print the final URI
-    st.write("Final URI:", final_uri)
     
     # Use the output URI as input for replicate.run()
     output = replicate.run(
