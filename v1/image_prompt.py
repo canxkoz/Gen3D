@@ -14,7 +14,7 @@ image_upload = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
 
 def upload_img_to_imgbb(image_path):
     url = "https://api.imgbb.com/1/upload"
-    api_key = "d192046740ccc0be38d900db83555cb2" # change this to your own imgbb API key
+    api_key = "b4229cf7fd0a31cf38b5e1895545cf0a" # imgbb API key
 
     with open(image_path, "rb") as file:
         image_data = base64.b64encode(file.read()).decode("utf-8")
@@ -43,7 +43,9 @@ if image_upload is not None:
     
     # Convert the output image to URI for download
     response = upload_img_to_imgbb("no_bg.png")
-    final_uri = response['data']['url']
+    print(response)
+    final_uri = response['data']['image']['url']
+    print(final_uri)
     
     # Display the original and the result side by side
     col1, col2 = st.columns(2)
@@ -60,11 +62,11 @@ if image_upload is not None:
         "cjwbw/shap-e:abfc30dc09f51fe27602185f313860c32d501e7a4af6c5a23872eae80e651cb8",
         input={
             "image": final_uri,
-            "prompt": "",
+            "prompt": "a horse",
             "batch_size": 1,
             "render_mode": "nerf",
-            "render_size": 256,
-            "guidance_scale": 3
+            "render_size": 128,
+            "guidance_scale": 15
         }
     )
 
