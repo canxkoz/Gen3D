@@ -9,6 +9,10 @@ import requests
 
 st.title("Image Background Remover")
 
+# Function to display GIF from URL
+def display_gif_from_url(gif_url):
+    st.markdown(f'<img src="{gif_url}" alt="Generated GIF">', unsafe_allow_html=True)
+
 # Upload the file
 image_upload = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
 
@@ -28,24 +32,18 @@ if image_upload is not None:
     # Open the uploaded image
     input_image = Image.open(image_upload)
     
-    # Convert the image to RGBA if it's not already
-    if input_image.mode != 'RGBA':
-        input_image = input_image.convert('RGBA')
-    
     # Remove the background
     output_image = remove(np.array(input_image))  # Convert PIL image to numpy array
     
     # Convert the output image to PIL Image
-    result_img = Image.fromarray(output_image)
+    result_img = Image.fromarray(output_image).convert("RGB")
 
     # Save the image to a file
     result_img.save("no_bg.png")
     
     # Convert the output image to URI for download
     response = upload_img_to_imgbb("no_bg.png")
-    print(response)
     final_uri = response['data']['image']['url']
-    print(final_uri)
     
     # Display the original and the result side by side
     col1, col2 = st.columns(2)
@@ -70,10 +68,6 @@ if image_upload is not None:
         }
     )
 
-    # Check if output contains image data
-    if 'image' in output:
-        # Display the output image
-        st.image(output['image'], caption='Output from Replicate')
-    else:
-        st.error("Error processing image with Replicate API")
+    gif_uri = output[0]
+    display_gif_from_url(gif_uri)
 
